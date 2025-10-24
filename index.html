@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Учебный чат-бот по Python</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f2f2f2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+}
+#chatbox {
+  width: 90%;
+  max-width: 700px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  padding: 15px;
+  height: 70vh;
+  overflow-y: auto;
+  margin-top: 30px;
+}
+.msg {
+  margin: 8px 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+.user { background:#0078d7; color:white; margin-left:auto; }
+.bot { background:#e5e5ea; color:black; margin-right:auto; }
+#input-area {
+  display:flex;
+  width:90%;
+  max-width:650px;
+  margin:10px 0 30px 0;
+}
+input {
+  flex:1; padding:10px; border:1px solid #ccc; border-radius:8px;
+}
+button {
+  margin-left:5px; padding:10px 15px; background:#0078d7;
+  color:white; border:none; border-radius:8px; cursor:pointer;
+}
+button:hover { background:#005fa3; }
+</style>
+</head>
+<body>
+
+<h2>💬 Учебный чат-бот по Python</h2>
+<div id="chatbox"></div>
+
+<div id="input-area">
+  <input type="text" id="userInput" placeholder="Задай вопрос о Python...">
+  <button onclick="sendMessage()">Отправить</button>
+</div>
+
+<script>
+let knowledge = [];
+
+fetch("data.json")
+  .then(r => r.json())
+  .then(data => {
+      knowledge = data;
+      addMessage("✅ База знаний загружена. Можешь спрашивать о Python, IDE, циклах, функциях, типах данных и многом другом.", "bot");
+  })
+  .catch(e => addMessage("⚠️ Ошибка загрузки базы: " + e, "bot"));
+
+function addMessage(text, cls){
+  const box = document.getElementById("chatbox");
+  const div = document.createElement("div");
+  div.className = "msg " + cls;
+  div.innerHTML = text;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function findAnswer(text){
+  const q = text.toLowerCase().replace(/[.,!?;:]/g, '');
+  let bestAnswer = "";
+  let bestScore = 0;
+  for (const item of knowledge){
+    let score = 0;
+    for (const k of item.k){
+      if (q.includes(k.toLowerCase())) score += 3;
+      const words = q.split(" ");
+      for (const w of words){
+        if (k.includes(w) && w.length > 3) score += 1;
+      }
+    }
+    if (score > bestScore){
+      bestScore = score;
+      bestAnswer = item.a;
+    }
+  }
+  return bestScore > 0 ? bestAnswer :
+    "Извини, я пока не знаю ответ. Попробуй спросить иначе — например: IDE, интерпретатор, циклы for/while, переменные, типы данных, функции, input, print.";
+}
+
+function sendMessage(){
+  const input = document.getElementById("userInput");
+  const text = input.value.trim();
+  if (!text) return;
+  addMessage(text, "user");
+  input.value = "";
+  setTimeout(() => addMessage(findAnswer(text), "bot"), 400);
+}
+</script>
+</body>
+</html>
